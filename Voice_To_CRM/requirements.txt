@@ -5,3 +5,5 @@ requests>=2.31
 mysql-connector-python>=8.4
 # Optional: production-grade server that also works on Windows
 # waitress>=3.0
+gunicorn
+gunicorn
