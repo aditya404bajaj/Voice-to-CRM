@@ -1,0 +1,46 @@
+{# Shared by "My account" and the administrator's user page. Needs: u, stats, recent, all_url #}
+{% from "_macros.html" import badge %}
+<div class="stack">
+  <section class="panel"><div class="panel-body">
+    <dl class="detail-grid" style="margin:0">
+      <div><dt>{{ _("Full name") }}</dt><dd>{{ u.name }}</dd></div>
+      <div><dt>{{ _("Email") }}</dt><dd>{{ u.email }}</dd></div>
+      <div><dt>{{ _("Account type") }}</dt><dd>{{ _("Administrator") if u.role == 'admin' else _("User") }}</dd></div>
+      <div><dt>{{ _("Member since") }}</dt><dd>{{ u.created_at|nice_date }}</dd></div>
+    </dl>
+  </div></section>
+
+  <section class="panel stat-strip" aria-label="{{ _('Totals') }}">
+    <div class="stat"><div class="stat-value">{{ stats.visits }}</div><div class="stat-label">{{ _("Visit logs") }}</div></div>
+    <div class="stat"><div class="stat-value">{{ stats.customers }}</div><div class="stat-label">{{ _("Customers") }}</div></div>
+    <div class="stat"><div class="stat-value">{{ stats.open_followups }}</div><div class="stat-label">{{ _("Need follow-up") }}</div></div>
+    <div class="stat"><div class="stat-value">{{ stats.recordings }}</div><div class="stat-label">{{ _("Recordings") }}</div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>{{ _("Recent visits") }}</h2>
+      {% if stats.visits %}<a class="btn btn-sm" href="{{ all_url }}">{{ _("View all visits") }}</a>{% endif %}
+    </div>
+    {% if recent %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>{{ _("Customer") }}</th><th>{{ _("Visit date") }}</th><th>{{ _("Issues and next action") }}</th><th>{{ _("Status") }}</th><th><span class="sr-only">{{ _("Actions") }}</span></th></tr></thead>
+        <tbody>
+        {% for log in recent %}
+        <tr>
+          <td><a href="{{ url_for('logs.detail', log_id=log.id) }}"><strong>{{ log.customer_name }}</strong></a><span class="sub">{{ log.location }}</span></td>
+          <td>{{ log.visit_date|nice_date }}</td>
+          <td>{% if log.issues %}<div class="clip">{{ log.issues }}</div>{% endif %}{% if log.follow_up %}<div class="clip muted">{{ log.follow_up }}</div>{% endif %}{% if not log.issues and not log.follow_up %}<span class="muted">—</span>{% endif %}</td>
+          <td>{{ badge(log.status) }}</td>
+          <td class="row-actions"><a class="btn btn-sm" href="{{ url_for('logs.detail', log_id=log.id) }}">{{ _("View") }}</a></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty"><h3>{{ _("No visit logs yet") }}</h3></div>
+    {% endif %}
+  </section>
+</div>

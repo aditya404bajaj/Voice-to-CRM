@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, log_fields %}
+{% block title %}{{ _("New visit log") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ _("New visit log") }}</h1>
+    <p>{{ _("Record your visit, check the fields we fill in, then save.") }}</p>
+  </div>
+</div>
+
+{% if not ai_configured %}
+<div class="notice notice-warn" style="margin-bottom:1.25rem">
+  {{ _("Speech-to-text is off because OPENAI_API_KEY is not set in .env. You can still record audio, dictate with your browser (Chrome or Edge), or type notes and use “Fill fields from transcript”.") }}
+</div>
+{% endif %}
+
+<form id="logForm" class="record-layout" data-ai-configured="{{ 'true' if ai_configured else 'false' }}"
+      data-today="{{ today }}" data-i18n="{{ js_strings|tojson|forceescape }}" novalidate>
+  <div class="stack">
+    <section class="panel recorder" aria-label="{{ _('Voice recorder') }}">
+      <div class="mode-switch" role="group" aria-label="{{ _('Recording type') }}">
+        <button type="button" data-mode-btn="audio" aria-pressed="true">{{ icon('mic') }}{{ _("Audio") }}</button>
+        <button type="button" data-mode-btn="video" aria-pressed="false">{{ icon('video') }}{{ _("Video") }}</button>
+      </div>
+      <video id="preview" class="preview" playsinline muted hidden></video>
+      <button type="button" id="recBtn" class="rec-btn" aria-pressed="false" data-mode="audio" aria-label="{{ _('Start recording') }}"
+              data-label-start="{{ _('Start recording') }}" data-label-stop="{{ _('Stop recording') }}">
+        <svg class="icon-mic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0h2a5 5 0 0 0 10 0zM11 19h2v3h-2z"/></svg>
+        <svg class="icon-cam" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h10a2 2 0 0 1 2 2v1.6l4-2.4v9.6l-4-2.4V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/></svg>
+        <svg class="icon-stop" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+      <div class="rec-timer" id="recTimer" aria-hidden="true">00:00</div>
+      <p class="rec-state" id="recState" role="status" aria-live="polite">{{ _("Tap the button and describe your visit.") }}</p>
+      <div class="rec-extra">
+        <button type="button" class="btn btn-sm" id="pickAudio">{{ icon('mic') }}{{ _("Upload audio") }}</button>
+        <button type="button" class="btn btn-sm" id="pickVideo">{{ icon('video') }}{{ _("Upload video") }}</button>
+        <input type="file" id="audioFile" accept="audio/*" multiple hidden>
+        <input type="file" id="videoFile" accept="video/mp4,video/webm" multiple hidden>
+      </div>
+      <p class="rec-list-title" id="recListTitle" hidden>{{ _("Recordings for this visit") }}</p>
+      <ul class="rec-list" id="recList" hidden
+          data-label-audio="{{ _('Audio') }}" data-label-video="{{ _('Video') }}"
+          data-label-remove="{{ _('Remove recording') }}"></ul>
+      <p class="small muted" style="margin:.75rem 0 0">{{ _("You can record or upload as many recordings as you need. All of them are saved with this visit.") }}</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>{{ _("Transcript") }}</h2>
+        <button type="button" class="btn btn-sm" id="extractBtn">{{ _("Fill fields from transcript") }}</button>
+      </div>
+      <div class="panel-body">
+        <label class="sr-only" for="transcript">{{ _("Transcript") }}</label>
+        <textarea id="transcript" name="transcript" rows="8" maxlength="30000"
+          placeholder="{{ _('Your words appear here after recording. You can also type or paste notes.') }}"></textarea>
+        <p class="small muted" id="extractNote" role="status" aria-live="polite" style="margin:.5rem 0 0"></p>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>{{ _("Visit details") }}</h2></div>
+    <div class="panel-body">
+      <div id="formError" class="notice notice-error" role="alert" hidden style="margin-bottom:1rem"></div>
+      {{ log_fields(values, {}, statuses) }}
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" id="saveBtn">{{ _("Save visit log") }}</button>
+        <a class="btn" href="{{ url_for('logs.index') }}">{{ _("Cancel") }}</a>
+      </div>
+    </div>
+  </section>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/record.js') }}"></script>{% endblock %}

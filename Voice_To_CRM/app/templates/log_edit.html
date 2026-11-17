@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import log_fields %}
+{% block title %}{{ _("Edit visit log") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ _("Edit visit log") }}</h1><p>{{ log.customer_name }} · {{ log.visit_date|nice_date }}</p></div>
+</div>
+<form method="post" class="panel" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="panel-body">
+    {% if errors %}<div class="notice notice-error" role="alert" style="margin-bottom:1rem">{{ _("Please fix the highlighted fields.") }}</div>{% endif %}
+    {{ log_fields(values, errors, statuses) }}
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">{{ _("Save changes") }}</button>
+      <a class="btn" href="{{ url_for('logs.detail', log_id=log.id) }}">{{ _("Cancel") }}</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

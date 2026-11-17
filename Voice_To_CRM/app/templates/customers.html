@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Customers") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ _("Customers") }}</h1><p>{{ _("Everyone you have visited, with how often and what is still open.") }}</p></div>
+</div>
+<div class="panel">
+  <form method="get" class="filters" style="grid-template-columns: 1fr auto" role="search">
+    <div class="field"><label for="q">{{ _("Search customers") }}</label>
+      <input type="search" id="q" name="q" value="{{ q }}" placeholder="{{ _('Customer name') }}"></div>
+    <div class="actions"><button class="btn btn-primary" type="submit">{{ _("Search") }}</button>
+      {% if q %}<a class="btn" href="{{ url_for('main.customers') }}">{{ _("Clear") }}</a>{% endif %}</div>
+  </form>
+  {% if customers %}
+  <div class="table-wrap" style="border-top:1px solid var(--line)">
+    <table>
+      <thead><tr><th>{{ _("Customer") }}</th><th>{{ _("Location") }}</th><th class="num">{{ _("Visits") }}</th><th>{{ _("Last visit") }}</th><th class="num">{{ _("Open follow-ups") }}</th><th><span class="sr-only">{{ _("Actions") }}</span></th></tr></thead>
+      <tbody>
+      {% for c in customers %}
+      <tr>
+        <td><a href="{{ url_for('main.customer_detail', name=c.customer_name) }}"><strong>{{ c.customer_name }}</strong></a></td>
+        <td>{{ c.location }}</td>
+        <td class="num">{{ c.visits }}</td>
+        <td>{{ c.last_visit|nice_date }}</td>
+        <td class="num">{{ c.open_followups }}</td>
+        <td class="row-actions"><a class="btn btn-sm" href="{{ url_for('main.customer_detail', name=c.customer_name) }}">{{ _("Open") }}</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="border-top:1px solid var(--line)">
+    <h3>{{ _("No customers match that search") if q else _("No customers yet") }}</h3>
+    <p>{{ _("Try a different name.") if q else _("Customers appear here once you save a visit log.") }}</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

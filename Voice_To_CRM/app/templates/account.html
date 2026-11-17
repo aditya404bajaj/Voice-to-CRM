@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ _("My account") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ _("My account") }}</h1>
+    <p>{% if g.user.role == 'admin' %}{{ _("You are an administrator. You can see every user and every visit.") }}{% else %}{{ _("Your details and your own visit totals.") }}{% endif %}</p>
+  </div>
+  {% if g.user.role == 'admin' %}
+  <div class="actions"><a class="btn" href="{{ url_for('main.users') }}">{{ _("All users") }}</a></div>
+  {% endif %}
+</div>
+{% include "_user_card.html" %}
+{% endblock %}

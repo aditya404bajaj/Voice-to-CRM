@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Users") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ _("Users") }}</h1><p>{{ _("Everyone with an account, with their visit totals. Open a user to see all their details.") }}</p></div>
+</div>
+<div class="panel">
+  <form method="get" class="filters" style="grid-template-columns: 1fr auto" role="search">
+    <div class="field"><label for="q">{{ _("Search users") }}</label>
+      <input type="search" id="q" name="q" value="{{ q }}" placeholder="{{ _('Name or email') }}"></div>
+    <div class="actions"><button class="btn btn-primary" type="submit">{{ _("Search") }}</button>
+      {% if q %}<a class="btn" href="{{ url_for('main.users') }}">{{ _("Clear") }}</a>{% endif %}</div>
+  </form>
+  {% if people %}
+  <div class="table-wrap" style="border-top:1px solid var(--line)">
+    <table>
+      <thead><tr>
+        <th>{{ _("Full name") }}</th><th>{{ _("Account type") }}</th><th class="num">{{ _("Visits") }}</th><th class="num">{{ _("Customers") }}</th>
+        <th class="num">{{ _("Open follow-ups") }}</th><th class="num">{{ _("Recordings") }}</th><th>{{ _("Last visit") }}</th><th>{{ _("Member since") }}</th>
+        <th><span class="sr-only">{{ _("Actions") }}</span></th>
+      </tr></thead>
+      <tbody>
+      {% for p in people %}
+      <tr>
+        <td><a href="{{ url_for('main.user_detail', user_id=p.id) }}"><strong>{{ p.name }}</strong></a><span class="sub">{{ p.email }}</span></td>
+        <td>{{ _("Administrator") if p.role == 'admin' else _("User") }}</td>
+        <td class="num">{{ p.visits }}</td>
+        <td class="num">{{ p.customers }}</td>
+        <td class="num">{{ p.open_followups }}</td>
+        <td class="num">{{ p.recordings }}</td>
+        <td>{{ (p.last_visit|nice_date) if p.last_visit else '—' }}</td>
+        <td>{{ p.created_at|nice_date }}</td>
+        <td class="row-actions"><a class="btn btn-sm" href="{{ url_for('main.user_detail', user_id=p.id) }}">{{ _("Open") }}</a></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty" style="border-top:1px solid var(--line)"><h3>{{ _("No users match that search") }}</h3></div>
+  {% endif %}
+</div>
+{% endblock %}

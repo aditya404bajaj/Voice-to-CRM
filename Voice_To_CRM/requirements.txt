@@ -1,0 +1,7 @@
+Flask>=3.0,<4
+python-dotenv>=1.0
+requests>=2.31
+# Only needed when you use MySQL (DB_BACKEND=mysql). SQLite needs nothing extra.
+mysql-connector-python>=8.4
+# Optional: production-grade server that also works on Windows
+# waitress>=3.0

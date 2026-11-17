@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, badge %}
+{% block title %}{{ c.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ c.name }}</h1>
+    <p>{{ c.locations|join(' · ') }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.customers') }}">{{ _("All customers") }}</a>
+    <a class="btn" href="{{ url_for('logs.report_list', customer=c.name) }}">{{ icon('file') }}{{ _("PDF report") }}</a>
+    <a class="btn btn-primary" href="{{ url_for('main.record', customer=c.name, location=c.locations[0], contact=(c.contacts[0] if c.contacts else '')) }}">{{ icon('mic') }}{{ _("New visit for this customer") }}</a>
+  </div>
+</div>
+
+<section class="panel stat-strip" aria-label="{{ _('Totals') }}">
+  <div class="stat"><div class="stat-value">{{ c.visits }}</div><div class="stat-label">{{ _("Visits") }}</div></div>
+  <div class="stat"><div class="stat-value stat-value-sm">{{ c.last_visit|nice_date }}</div><div class="stat-label">{{ _("Last visit") }}</div></div>
+  <div class="stat"><div class="stat-value">{{ c.needs_followup }}</div><div class="stat-label">{{ _("Need follow-up") }}</div></div>
+  <div class="stat"><div class="stat-value" {% if c.overdue %}style="color:var(--danger)"{% endif %}>{{ c.overdue }}</div><div class="stat-label">{{ _("Overdue") }}</div></div>
+</section>
+
+<div class="dash-grid" style="margin-top:1.25rem">
+  <section class="panel">
+    <div class="panel-head"><h2>{{ _("About this customer") }}</h2></div>
+    <div class="panel-body">
+      <dl class="detail-grid" style="grid-template-columns:1fr;margin:0">
+        <div><dt>{{ _("Contact people") }}</dt><dd>{{ c.contacts|join(', ') or '—' }}</dd></div>
+        <div><dt>{{ _("Locations") }}</dt><dd>{{ c.locations|join(', ') }}</dd></div>
+        <div><dt>{{ _("First visit") }}</dt><dd>{{ c.first_visit|nice_date }}</dd></div>
+        <div><dt>{{ _("Completed visits") }}</dt><dd>{{ c.completed }}</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>{{ _("Visit history") }}</h2><span class="muted small">{{ _n("{n} visit log", "{n} visit logs", c.visits) }}</span></div>
+    <ol class="timeline">
+      {% for r in c.rows %}
+      <li>
+        <div class="tl-head">
+          <a href="{{ url_for('logs.detail', log_id=r.id) }}"><strong>{{ r.visit_date|nice_date }}</strong></a>
+          {{ badge(r.status) }}
+        </div>
+        {% if r.contact_person %}<div class="muted small">{{ r.contact_person }}</div>{% endif %}
+        {% if r.observations %}<p class="tl-text pre">{{ r.observations }}</p>{% endif %}
+        {% if r.issues %}<p class="tl-text pre"><strong>{{ _("Issues") }}:</strong> {{ r.issues }}</p>{% endif %}
+        {% if r.follow_up or r.follow_up_date %}<p class="tl-text muted"><strong>{{ _("Next action") }}:</strong> {{ r.follow_up or '—' }}{% if r.follow_up_date %} · {{ r.follow_up_date|nice_date }}{% endif %}</p>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+</div>
+{% endblock %}

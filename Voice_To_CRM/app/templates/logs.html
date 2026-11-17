@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, badge, pager %}
+{% block title %}{{ _("Visit logs") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ _("Visit logs") }}</h1>
+    <p>{{ _("Search, filter and manage every recorded visit.") }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('logs.report_list', **query) }}">{{ icon('file') }}{{ _("PDF report") }}</a>
+    <a class="btn" href="{{ url_for('logs.export_csv', **query) }}">{{ icon('download') }}{{ _("Export CSV") }}</a>
+    <a class="btn btn-primary" href="{{ url_for('main.record') }}">{{ icon('mic') }}{{ _("New visit log") }}</a>
+  </div>
+</div>
+
+<div class="panel">
+  <form method="get" action="{{ url_for('logs.index') }}" class="filters" role="search">
+    {% if filters.customer %}<input type="hidden" name="customer" value="{{ filters.customer }}">{% endif %}
+    {% if filters.user_id %}<input type="hidden" name="user" value="{{ filters.user_id }}">{% endif %}
+    <div class="field"><label for="q">{{ _("Search") }}</label>
+      <input type="search" id="q" name="q" value="{{ filters.q }}" placeholder="{{ _('Customer, location or contact') }}"></div>
+    <div class="field"><label for="status">{{ _("Status") }}</label>
+      <select id="status" name="status">
+        <option value="">{{ _("All statuses") }}</option>
+        {% for s in statuses %}<option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ _(s) }}</option>{% endfor %}
+      </select></div>
+    <div class="field"><label for="from">{{ _("From") }}</label>
+      <input type="date" id="from" name="from" value="{{ filters.date_from }}"></div>
+    <div class="field"><label for="to">{{ _("To") }}</label>
+      <input type="date" id="to" name="to" value="{{ filters.date_to }}"></div>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">{{ _("Apply") }}</button>
+      {% if query %}<a class="btn" href="{{ url_for('logs.index') }}">{{ _("Clear") }}</a>{% endif %}
+    </div>
+  </form>
+  {% if filters.customer %}
+  <div class="chip-row">{{ _("Customer") }}: <strong>{{ filters.customer }}</strong></div>
+  {% endif %}
+  {% if filter_user %}
+  <div class="chip-row">{{ _("User") }}: <strong>{{ filter_user.name }}</strong> · <a href="{{ url_for('logs.index') }}">{{ _("Show everyone") }}</a></div>
+  {% endif %}
+
+  {% if logs %}
+  <div class="table-wrap" style="border-top:1px solid var(--line)">
+    <table>
+      <thead><tr>
+        <th>{{ _("Customer") }}</th><th>{{ _("Contact") }}</th><th>{{ _("Visit date") }}</th><th>{{ _("Issues and next action") }}</th><th>{{ _("Status") }}</th><th><span class="sr-only">{{ _("Actions") }}</span></th>
+      </tr></thead>
+      <tbody>
+      {% for log in logs %}
+      <tr>
+        <td><a href="{{ url_for('logs.detail', log_id=log.id) }}"><strong>{{ log.customer_name }}</strong></a>
+            <span class="sub">{{ log.location }}{% if g.user.role == 'admin' %} · {{ _("by {name}", name=log.owner_name) }}{% endif %}</span></td>
+        <td>{{ log.contact_person or '—' }}</td>
+        <td>{{ log.visit_date|nice_date }}</td>
+        <td>
+          {% if log.issues %}<div class="clip">{{ log.issues }}</div>{% endif %}
+          {% if log.follow_up %}<div class="clip muted">{{ log.follow_up }}</div>{% endif %}
+          {% if log.follow_up_date and log.status != 'Completed' %}
+            {% set overdue = log.follow_up_date < today %}
+            <span class="sub"{% if overdue %} style="color:var(--danger)"{% endif %}>{{ _("Follow up by {date}", date=log.follow_up_date|nice_date) }}{% if overdue %} ({{ _("overdue") }}){% endif %}</span>
+          {% endif %}
+          {% if not log.issues and not log.follow_up and not log.follow_up_date %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td>{{ badge(log.status) }}</td>
+        <td class="row-actions">
+          <a class="btn btn-sm" href="{{ url_for('logs.detail', log_id=log.id) }}">{{ _("View") }}</a>
+          <a class="btn btn-sm" href="{{ url_for('logs.edit', log_id=log.id) }}">{{ _("Edit") }}</a>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pager(page, pages, total, 'logs.index', query) }}
+  {% elif query %}
+  <div class="empty" style="border-top:1px solid var(--line)"><h3>{{ _("No visits match these filters") }}</h3>
+    <p>{{ _("Try a different search or widen the dates.") }}</p><a class="btn" href="{{ url_for('logs.index') }}">{{ _("Clear filters") }}</a></div>
+  {% else %}
+  <div class="empty" style="border-top:1px solid var(--line)"><h3>{{ _("No visit logs yet") }}</h3>
+    <p>{{ _("Record your first visit and it will be listed here.") }}</p>
+    <a class="btn btn-primary" href="{{ url_for('main.record') }}">{{ _("Record a visit") }}</a></div>
+  {% endif %}
+</div>
+{% endblock %}

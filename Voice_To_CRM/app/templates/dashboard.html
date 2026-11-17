@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, badge %}
+{% block title %}{{ _("Dashboard") }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ _("Hello, {name}", name=g.user.name.split()[0]) }}</h1>
+    <p>{% if g.user.role == 'admin' %}{{ _("Showing visits from every user.") }}{% else %}{{ _("Here is where your visits stand today.") }}{% endif %}</p>
+  </div>
+  <div class="actions">
+    {% if email_ready %}
+    <form method="post" action="{{ url_for('main.send_my_reminders') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn" type="submit">{{ icon('mail') }}{{ _("Email my follow-ups") }}</button>
+    </form>
+    {% endif %}
+    <a class="btn btn-primary" href="{{ url_for('main.record') }}">{{ icon('mic') }}{{ _("New visit log") }}</a>
+  </div>
+</div>
+
+{% if not email_ready and g.user.role == 'admin' %}
+<div class="notice notice-info" style="margin-bottom:1.25rem">{{ _("Email reminders are off. Add the SMTP_* values to .env to turn them on.") }}</div>
+{% endif %}
+
+<section class="panel stat-strip" aria-label="{{ _('Totals') }}">
+  <div class="stat"><div class="stat-value">{{ stats.total }}</div><div class="stat-label">{{ _("Visit logs") }}</div></div>
+  <div class="stat"><div class="stat-value">{{ stats.customers }}</div><div class="stat-label">{{ _("Customers") }}</div></div>
+  <div class="stat"><div class="stat-value">{{ stats.need_followup }}</div><div class="stat-label">{{ _("Need follow-up") }}</div></div>
+  <div class="stat"><div class="stat-value">{{ stats.completed }}</div><div class="stat-label">{{ _("Completed") }}</div></div>
+</section>
+
+<div class="dash-grid" style="margin-top:1.25rem">
+  <div class="stack">
+    <section class="panel">
+      <div class="panel-head"><h2>{{ _("Follow-ups due") }}</h2><span class="muted small">{{ _("next 7 days and overdue") }}</span></div>
+      {% if stats.followups %}
+      <ul class="followup-list">
+        {% for f in stats.followups %}
+        <li>
+          <span class="due{% if f.overdue %} overdue{% elif f.soon %} soon{% endif %}">
+            {%- if f.due_days < 0 %}{{ _("{n}d late", n=-f.due_days) }}
+            {%- elif f.due_days == 0 %}{{ _("Today") }}
+            {%- elif f.due_days == 1 %}{{ _("Tomorrow") }}
+            {%- else %}{{ f.follow_up_date|short_date }}{% endif -%}
+          </span>
+          <div>
+            <a href="{{ url_for('logs.detail', log_id=f.id) }}"><strong>{{ f.customer_name }}</strong></a>
+            <span class="sub muted small" style="display:block">{{ f.follow_up or f.location }}</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty"><h3>{{ _("Nothing due") }}</h3><p>{{ _("Follow-up dates you add to visit logs will show up here.") }}</p></div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>{{ _("By status") }}</h2></div>
+      <div class="panel-body">
+        {% if stats.total %}
+          {% for name in ['Pending', 'Follow-up Required', 'Completed'] %}
+          {% set n = stats.by_status.get(name, 0) %}
+          <div class="status-row">
+            <span>{{ _(name) }}</span>
+            <div class="meter" role="img" aria-label="{{ n }} / {{ stats.total }}"><i style="width: {{ (n / stats.total * 100)|round(1) }}%"></i></div>
+            <strong class="num">{{ n }}</strong>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="muted" style="margin:0">{{ _("No visit logs yet.") }}</p>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel">
+      <div class="panel-head"><h2>{{ _("Visits in the last 14 days") }}</h2></div>
+      <div class="bars" role="img" aria-label="{{ _('Bar chart of visits per day for the last 14 days') }}" style="margin-top:1rem">
+        {% for d in stats.per_day %}
+        <div class="bar{% if d.count == 0 %} zero{% endif %}" title="{{ d.date|short_date }}: {{ d.count }}">
+          <i style="height: {{ (d.count / stats.max_per_day * 100)|round(0) if d.count else 3 }}%"></i>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="bar-labels"><span>{{ stats.per_day[0].date|short_date }}</span><span>{{ stats.per_day[-1].date|short_date }}</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>{{ _("Recent visits") }}</h2><a class="small" href="{{ url_for('logs.index') }}">{{ _("See all") }}</a></div>
+      {% if stats.recent %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>{{ _("Customer") }}</th><th>{{ _("Date") }}</th><th>{{ _("Status") }}</th></tr></thead>
+          <tbody>
+          {% for r in stats.recent %}
+          <tr>
+            <td><a href="{{ url_for('logs.detail', log_id=r.id) }}"><strong>{{ r.customer_name }}</strong></a>
+                <span class="sub">{{ r.location }}{% if g.user.role == 'admin' %} · {{ r.owner_name }}{% endif %}</span></td>
+            <td>{{ r.visit_date|nice_date }}</td>
+            <td>{{ badge(r.status) }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty"><h3>{{ _("No visits logged yet") }}</h3><p>{{ _("Record your first visit and it will appear here.") }}</p>
+        <a class="btn btn-primary" href="{{ url_for('main.record') }}">{{ _("Record a visit") }}</a></div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

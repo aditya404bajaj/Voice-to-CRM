@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import lang_switch with context %}
+{% block title %}{{ _("Create account") }}{% endblock %}
+{% block auth %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-top"><div class="brand"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0h2a5 5 0 0 0 10 0zM11 19h2v3h-2z"/></svg></span>{{ app_name }}</div>{{ lang_switch() }}</div>
+    <div class="panel"><div class="panel-body">
+      <h1>{{ _("Create account") }}</h1>
+      {% if closed %}
+        <p class="muted">{{ _("New sign-ups are turned off. Ask your administrator to add you.") }}</p>
+        <a class="btn" href="{{ url_for('auth.login') }}">{{ _("Back to sign in") }}</a>
+      {% else %}
+      <p class="muted">{{ _("Choose the type of account you need.") }}</p>
+      {% if error %}<div class="notice notice-error" role="alert" style="margin-bottom:1rem">{{ error }}</div>{% endif %}
+      <form method="post" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if first %}
+        <div class="notice notice-info" style="margin-bottom:1rem">{{ _("This is the first account, so it becomes the administrator.") }}</div>
+        {% else %}
+        <fieldset class="role-choice">
+          <legend>{{ _("Account type") }}</legend>
+          <label class="role-opt">
+            <input type="radio" name="role" value="user" {% if form.get('role') != 'admin' %}checked{% endif %}>
+            <span><strong>{{ _("User account") }}</strong>
+              <span class="hint">{{ _("Sees only their own visits and details.") }}</span></span>
+          </label>
+          <label class="role-opt">
+            <input type="radio" name="role" value="admin" {% if form.get('role') == 'admin' %}checked{% endif %} {% if not admin_signup %}disabled{% endif %}>
+            <span><strong>{{ _("Administrator account") }}</strong>
+              <span class="hint">{{ _("Sees every user and every visit in full detail.") }}</span></span>
+          </label>
+          {% if admin_signup %}
+          <div class="field" style="margin:.75rem 0 0">
+            <label for="admin_code">{{ _("Admin code") }}</label>
+            <input type="password" id="admin_code" name="admin_code" autocomplete="off">
+            <div class="hint">{{ _("Needed only for an administrator account. Ask your administrator for it.") }}</div>
+          </div>
+          {% else %}
+          <div class="hint">{{ _("Administrator sign-up is turned off. Ask an administrator.") }}</div>
+          {% endif %}
+        </fieldset>
+        {% endif %}
+        <div class="field">
+          <label for="name">{{ _("Full name") }}</label>
+          <input type="text" id="name" name="name" value="{{ form.get('name', '') }}" autocomplete="name" required autofocus>
+        </div>
+        <div class="field">
+          <label for="email">{{ _("Email") }}</label>
+          <input type="email" id="email" name="email" value="{{ form.get('email', '') }}" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">{{ _("Password") }}</label>
+          <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required>
+          <div class="hint">{{ _("At least 8 characters.") }}</div>
+        </div>
+        <div class="field">
+          <label for="confirm">{{ _("Confirm password") }}</label>
+          <input type="password" id="confirm" name="confirm" autocomplete="new-password" required>
+        </div>
+        <button class="btn btn-primary" style="width:100%" type="submit">{{ _("Create account") }}</button>
+      </form>
+      <p class="small muted" style="margin:1rem 0 0;text-align:center">
+        {{ _("Already registered?") }} <a href="{{ url_for('auth.login') }}">{{ _("Sign in") }}</a>
+      </p>
+      {% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}

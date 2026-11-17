@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{{ _("Visit report") }} · {{ subtitle }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/report.css') }}">
+</head>
+<body>
+<div class="toolbar no-print">
+  <a class="btn" href="{{ back_url }}">← {{ _("Back") }}</a>
+  <button type="button" class="btn btn-primary" data-print>{{ _("Print or save as PDF") }}</button>
+  <span class="hint">{{ _("In the print window, choose “Save as PDF” as the destination.") }}</span>
+</div>
+
+<header class="r-head">
+  <h1>{{ _("Visit report") }}</h1>
+  <p class="r-sub">{{ subtitle }}</p>
+  <p class="r-meta">{{ _("Prepared by {name} on {date}", name=g.user.name, date=generated|nice_date) }}
+    · {{ _n("{n} visit log", "{n} visit logs", logs|length) }}</p>
+</header>
+
+{% if not logs %}
+<p class="r-empty">{{ _("No visit logs match these filters") }}.</p>
+{% endif %}
+
+{% for log in logs %}
+<article class="visit">
+  <div class="v-head">
+    <h2>{{ log.customer_name }}</h2>
+    <span class="badge badge-{{ log.status|status_class }}">{{ _(log.status) }}</span>
+  </div>
+  <p class="v-sub">{{ log.location }} · {{ log.visit_date|nice_date }}{% if log.contact_person %} · {{ log.contact_person }}{% endif %}
+    {% if g.user.role == 'admin' %} · {{ _("by {name}", name=log.owner_name) }}{% endif %}</p>
+  <dl>
+    {% if log.observations %}<dt>{{ _("What you saw or discussed") }}</dt><dd>{{ log.observations }}</dd>{% endif %}
+    {% if log.issues %}<dt>{{ _("Issues") }}</dt><dd>{{ log.issues }}</dd>{% endif %}
+    {% if log.follow_up or log.follow_up_date %}
+    <dt>{{ _("Next action") }}</dt>
+    <dd>{{ log.follow_up or '—' }}{% if log.follow_up_date %} <span class="due">({{ _("Follow up by {date}", date=log.follow_up_date|nice_date) }}{% if log.status != 'Completed' and log.follow_up_date < today %}, {{ _("overdue") }}{% endif %})</span>{% endif %}</dd>
+    {% endif %}
+    {% if single and log.transcript %}<dt>{{ _("Transcript") }}</dt><dd class="transcript">{{ log.transcript }}</dd>{% endif %}
+  </dl>
+</article>
+{% endfor %}
+
+{% if truncated %}<p class="r-empty">{{ _("Only the newest {n} visits are shown. Narrow the filters to see the rest.", n=limit) }}</p>{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
